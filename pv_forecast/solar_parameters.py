@@ -1,7 +1,7 @@
 import pandas as pd
 import pvlib
 
-class Weather_Processing:
+class Solar_Processing:
 
     def __init__(self, latitude: float, longitude: float, altitude: float, timezone: str) -> None:
         self.mylatitude = latitude
@@ -21,7 +21,6 @@ class Weather_Processing:
         
         self.clearsky = self.get_clearsky_weather(time_range)
         self.solpos = self.get_solar_postition(time_range)
-        print("fertig")
     
     def get_clearsky_weather(self, time_range):
         """ Determine clearsky irradiation conditions. """
@@ -38,7 +37,7 @@ class Weather_Processing:
 
 if __name__ ==  "__main__":
 
-    wp = Weather_Processing(51.2, 6.8, 90, 'utc')
+    wp = Solar_Processing(51.2, 6.8, 90, 'utc')
     time_range = pd.date_range(start="2021-03-29 04:00", end="2021-03-29 18:00", freq='1h', tz='utc')
 
     wp.process_weather_data(time_range)
