@@ -35,7 +35,7 @@ class Solar_Processing:
                                                         longitude=self.mylongitude, 
                                                         altitude=self.myaltitude)
         return solpos
-    
+    #TODO: Check meaning of max / min zenith values --> kept constant for testing purpose.
     def calc_dni_disc(self, time_range, ghi, mypressure=101325):
         dni = disc(ghi=ghi, solar_zenith=self.solpos.zenith, datetime_or_doy=time_range)
         return dni

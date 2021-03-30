@@ -31,7 +31,7 @@ def main():
     solar_proc.process_weather_data(time_range)
 
     # Calc DNI using DISC model:
-    dni_disc = solar_proc.calc_dni_disc(time_range=time_range, ghi=dwddata.RAD_WH)
+    dni_disc = solar_proc.calc_dni_disc(time_range=time_range, ghi=dwddata.RAD_WH, mypressure=dwddata.PRESSURE_AIR_SURFACE_REDUCED)
 
     # Calc DNI using DIRINT model:
     dni_dirint = solar_proc.calc_dni_dirindex(time_range=time_range, ghi=dwddata.RAD_WH, dew_point=dwddata.DEW_POINT_DEGC)
@@ -41,7 +41,11 @@ def main():
     dhi_erbs = solar_proc.calc_dhi_erbs(ghi=dwddata.RAD_WH, time_range=time_range)
     #print(dhi_erbs)
 
-    # Build up common dataframe:
+    
+
+
+
+    # Build up common dataframe to collect complete calculation data:
     whole_df = dwddata
     whole_df.columns = whole_df.columns.add_categories(["DHI_ERBS", "DNI_DISC", "DNI_DIRINDEX"])
     whole_df["DHI_ERBS"] = dhi_erbs["dhi"]
@@ -52,6 +56,11 @@ def main():
     whole_df["GHI_CLEARSKY"] = solar_proc.clearsky.ghi
     whole_df["DNI_CLEARSKY"] = solar_proc.clearsky.dni
     whole_df["DHI_CLEARSKY"] = solar_proc.clearsky.dhi
+
+    whole_df.columns = whole_df.columns.add_categories(["AZIMUTH", "ZENITH", "ELEVATION"])
+    whole_df["AZIMUTH"] = solar_proc.solpos.azimuth
+    whole_df["ZENITH"] = solar_proc.solpos.zenith
+    whole_df["ELEVATION"] = solar_proc.solpos.elevation
 
     whole_df.to_csv("new.csv")
 
