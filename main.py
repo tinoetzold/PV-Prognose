@@ -88,8 +88,10 @@ def main():
     whole_df["AZIMUTH"] = solar_proc.solpos.azimuth
     whole_df["ZENITH"] = solar_proc.solpos.zenith
     whole_df["ELEVATION"] = solar_proc.solpos.elevation
+    # Remove categorical index
     whole_df.columns = whole_df.columns.tolist()
 
+    # Mege single datasets into one to have a common csv file.
     result = pd.concat([whole_df, my_data], axis=1)
     #result = pd.merge(whole_df,my_data, left_index=True)
     csv_filename = datetime.now().strftime("%Y_%m_%d_%H_Uhr.csv")
