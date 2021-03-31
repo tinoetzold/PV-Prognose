@@ -1,6 +1,11 @@
 import configparser
+import os
+from datetime import datetime
+import pandas as pd
+from pvlib.irradiance import dni
 from pv_forecast.dwd_forecast import DWD_Forecast
 from pv_forecast.solar_parameters import Solar_Processing
+from pv_forecast.pv_system import PVSystem
 
 def main():
     config = configparser.ConfigParser()
@@ -22,14 +27,14 @@ def main():
 
     # Now get the latest weather data:
     dwddata = dwd_fc.retrieve_data()
-    dwddata = dwddata.loc['2021-03-30 6:00':'2021-03-30 19:00']
+    dwddata = dwddata.loc['2021-03-31 6:00':'2021-04-01 20:00']
 
     # Use the time range of the DWD Data as basis for further calculations
     time_range = dwddata.index
 
     # Now set up the weather data
     solar_proc.process_weather_data(time_range)
-
+ 
     # Calc DNI using DISC model:
     dni_disc = solar_proc.calc_dni_disc(time_range=time_range, ghi=dwddata.RAD_WH, mypressure=dwddata.PRESSURE_AIR_SURFACE_REDUCED)
 
@@ -41,10 +46,32 @@ def main():
     dhi_erbs = solar_proc.calc_dhi_erbs(ghi=dwddata.RAD_WH, time_range=time_range)
     #print(dhi_erbs)
 
+    # Initiate PV System
+    pvlib_location = solar_proc.location
+    pv_system = PVSystem(inverter=config.get("SolarSystem", "InverterName", raw=True),
+                        pv_module=config.get("SolarSystem", "ModuleName", raw=True),
+                        albedo=config.getfloat("SolarSystem", "Albedo", raw=True),
+                        pvlib_location=pvlib_location)
+
+    pv_system.add_pv_system(id="Ost",
+                            surface_tilt=config.getfloat("SolarSystem", "Elevation", raw=True),
+                            surface_azimuth=config.getfloat("SolarSystem", "Azimuth_1", raw=True),
+                            modules_per_string=config.getint("SolarSystem", "NumPanels_1", raw=True))
+
+    pv_system.add_pv_system(id="West",
+                            surface_tilt=config.getfloat("SolarSystem", "Elevation", raw=True),
+                            surface_azimuth=config.getfloat("SolarSystem", "Azimuth_2", raw=True),
+                            modules_per_string=config.getint("SolarSystem", "NumPanels_2", raw=True))
+
+    weather_data = pv_system.setup_weather_data(ghi=dwddata.RAD_WH,
+                                                dhi=dhi_erbs.dhi,
+                                                dni=dni_disc.dni,
+                                                temp_air=dwddata.TEMPERATURE_AIR_200DEGC,
+                                                wind_speed=dwddata.WIND_SPEED)
+
+    pv_system.run_model(wheater_data=weather_data)
+    my_data = pv_system.combine_data()
     
-
-
-
     # Build up common dataframe to collect complete calculation data:
     whole_df = dwddata
     whole_df.columns = whole_df.columns.add_categories(["DHI_ERBS", "DNI_DISC", "DNI_DIRINDEX"])
@@ -61,8 +88,12 @@ def main():
     whole_df["AZIMUTH"] = solar_proc.solpos.azimuth
     whole_df["ZENITH"] = solar_proc.solpos.zenith
     whole_df["ELEVATION"] = solar_proc.solpos.elevation
+    whole_df.columns = whole_df.columns.tolist()
 
-    whole_df.to_csv("new.csv")
+    result = pd.concat([whole_df, my_data], axis=1)
+    #result = pd.merge(whole_df,my_data, left_index=True)
+    csv_filename = datetime.now().strftime("%Y_%m_%d_%H_Uhr.csv")
+    result.to_csv(os.path.join("output", csv_filename))
 
 if __name__ == "__main__":
     main()
