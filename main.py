@@ -27,7 +27,7 @@ def main():
 
     # Now get the latest weather data:
     dwddata = dwd_fc.retrieve_data()
-    dwddata = dwddata.loc['2021-03-31 6:00':'2021-04-01 20:00']
+    dwddata = dwddata.loc['2021-03-31 6:00':'2021-04-02 20:00']
 
     # Use the time range of the DWD Data as basis for further calculations
     time_range = dwddata.index
@@ -94,7 +94,7 @@ def main():
     # Mege single datasets into one to have a common csv file.
     result = pd.concat([whole_df, my_data], axis=1)
     #result = pd.merge(whole_df,my_data, left_index=True)
-    csv_filename = datetime.now().strftime("%Y_%m_%d_%H_Uhr.csv")
+    csv_filename = datetime.now().strftime("%Y_%m_%d_%H_%M_Uhr.csv")
     result.to_csv(os.path.join("output", csv_filename))
 
 if __name__ == "__main__":
