@@ -74,7 +74,7 @@ class PVSystem:
                                                 )
         self.model_chain[id] = model_chain
     
-    def setup_weather_data(self, ghi, dhi, dni, temp_air, wind_speed):
+    def setup_weather_data(self, ghi, dhi, dni, temp_air=None, wind_speed=None):
         weather_data = {"ghi": ghi, "dni": dni, "dhi": dhi,
                         "temp_air": temp_air, "wind_speed": wind_speed}
         weather_df = pd.DataFrame(weather_data)
@@ -83,9 +83,8 @@ class PVSystem:
     def run_model(self, wheater_data) -> None:
         for id, pv_system in self.model_chain.items():
             pv_system.run_model(wheater_data)
-        self.combine_data()
 
-    def combine_data(self):
+    def combine_data(self, current_mode: str):
         data_dict = pd.DataFrame()
         plain_series = ["ac", "aoi", "cell_temperature", "effective_irradiance",]
         nested_series = ["dc", "diode_params", "total_irrad"]
@@ -95,17 +94,17 @@ class PVSystem:
             # Assign plain stored Series:
             for pv_key in plain_series:
                 data_ = getattr(pv_system, pv_key)
-                data_dict[id + "_" + pv_key] = data_
+                data_dict[id + "_" + pv_key + "_" + current_mode] = data_
             
             # Assign nested stored Series:
             for pv_key in nested_series:
                 data_ = getattr(pv_system, pv_key)
                 for column in data_.columns:
-                    data_dict[id + "_" + pv_key + "_" + column] = data_[column]
+                    data_dict[id + "_" + pv_key + "_" + column + "_" + current_mode] = data_[column]
         
         column_names = data_dict.columns
         all_ac_columns =[col_name for col_name in column_names if "_ac" in col_name]
-        data_dict["ALL_AC_POWER"] = 0
+        data_dict["ALL_AC_POWER" + "_" + current_mode] = 0
         for col in all_ac_columns:
-            data_dict["ALL_AC_POWER"] = data_dict["ALL_AC_POWER"] + data_dict[col]
+            data_dict["ALL_AC_POWER" + "_" + current_mode] = data_dict["ALL_AC_POWER" + "_" + current_mode] + data_dict[col]
         return data_dict

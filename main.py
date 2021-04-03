@@ -10,7 +10,7 @@ from pv_forecast.pv_system import PVSystem
 def main():
     config = configparser.ConfigParser()
     config.read('configuration.ini')
-    
+
     # Initialize class for retrieving DWD Data:
     dwd_fc = DWD_Forecast(config.get("DWD", "DWDStation", raw=True))
     
@@ -27,7 +27,7 @@ def main():
 
     # Now get the latest weather data:
     dwddata = dwd_fc.retrieve_data()
-    dwddata = dwddata.loc['2021-03-31 6:00':'2021-04-02 20:00']
+    dwddata = dwddata.loc['2021-04-02 6:00':'2021-04-04 20:00']
 
     # Use the time range of the DWD Data as basis for further calculations
     time_range = dwddata.index
@@ -63,14 +63,38 @@ def main():
                             surface_azimuth=config.getfloat("SolarSystem", "Azimuth_2", raw=True),
                             modules_per_string=config.getint("SolarSystem", "NumPanels_2", raw=True))
 
-    weather_data = pv_system.setup_weather_data(ghi=dwddata.RAD_WH,
-                                                dhi=dhi_erbs.dhi,
-                                                dni=dni_disc.dni,
-                                                temp_air=dwddata.TEMPERATURE_AIR_200DEGC,
-                                                wind_speed=dwddata.WIND_SPEED)
+    # the following list represents different calculation approaches to determine 
+    # several algorithmst to find the best-suiting approach for the calculation
+    # model.
+    list_of_modes = ["clearsky", "disc", "dirint"]
 
-    pv_system.run_model(wheater_data=weather_data)
-    my_data = pv_system.combine_data()
+    calc_data = pd.DataFrame()
+    for current_mode in list_of_modes:
+        if current_mode == "clearsky":
+            # Using Clearsky-Irradiance (no clouds - theoretical model) to compute
+            # theoretical generation potential for pv system.
+            weather_data = pv_system.setup_weather_data(ghi=solar_proc.clearsky.ghi,
+                                                        dhi=solar_proc.clearsky.dhi,
+                                                        dni=solar_proc.clearsky.dni,
+                                                        temp_air=dwddata.TEMPERATURE_AIR_200DEGC,
+                                                        wind_speed=dwddata.WIND_SPEED)
+        elif current_mode == "disc":
+            # Modue using DWD Forecast for calculation
+            weather_data = pv_system.setup_weather_data(ghi=dwddata.RAD_WH,
+                                                        dhi=dhi_erbs.dhi,
+                                                        dni=dni_disc.dni,
+                                                        temp_air=dwddata.TEMPERATURE_AIR_200DEGC,
+                                                        wind_speed=dwddata.WIND_SPEED)
+        elif current_mode == "dirint":
+            weather_data = pv_system.setup_weather_data(ghi=dwddata.RAD_WH,
+                                                        dhi=dni_dirint.values,
+                                                        dni=dni_disc.dni,
+                                                        temp_air=dwddata.TEMPERATURE_AIR_200DEGC,
+                                                        wind_speed=dwddata.WIND_SPEED)     
+
+        pv_system.run_model(wheater_data=weather_data)
+        my_data = pv_system.combine_data(current_mode)
+        calc_data = pd.concat([calc_data, my_data], axis=1)
     
     # Build up common dataframe to collect complete calculation data:
     whole_df = dwddata
@@ -92,7 +116,7 @@ def main():
     whole_df.columns = whole_df.columns.tolist()
 
     # Mege single datasets into one to have a common csv file.
-    result = pd.concat([whole_df, my_data], axis=1)
+    result = pd.concat([whole_df, calc_data], axis=1)
     #result = pd.merge(whole_df,my_data, left_index=True)
     csv_filename = datetime.now().strftime("%Y_%m_%d_%H_%M_Uhr.csv")
     result.to_csv(os.path.join("output", csv_filename))
