@@ -27,7 +27,7 @@ def main():
 
     # Now get the latest weather data:
     dwddata = dwd_fc.retrieve_data()
-    dwddata = dwddata.loc['2021-04-02 6:00':'2021-04-04 20:00']
+    dwddata = dwddata.loc['2021-04-02 6:00':'2021-04-06 20:00']
 
     # Use the time range of the DWD Data as basis for further calculations
     time_range = dwddata.index

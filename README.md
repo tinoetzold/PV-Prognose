@@ -18,3 +18,10 @@ Model to determine the expected power output of PV-System based on DWD weather f
           curve for modeling curve shape
         * i_xx : Current at module V = 0.5(Voc+Vmp), defines 5th point on
           I-V curve for modeling curve shape
+
+# Github discussions
+https://github.com/pvlib/pvlib-python/issues/1128
+
+https://github.com/StefaE/PVForecast
+
+https://github.com/kilianknoll/DWDForecast/issues/5

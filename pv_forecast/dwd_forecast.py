@@ -52,6 +52,9 @@ class DWD_Forecast:
         """
         # First, create a table from plain DWD data using DATE as index
         reshaped_data = pd.pivot_table(raw_data, values="value", index=["date"], columns="parameter", aggfunc='first')
+        # Now, shift values by 1h to the past, since the DWD Values are assigned to the end of the periode, whereas the
+        # PVLIB values are assigned to the beginning of a cycle.
+        reshaped_data.index = reshaped_data.index - pd.offsets.Hour(1)
         # Add some columns in advance (otherwise will not work since columns are categorical)
         reshaped_data.columns = reshaped_data.columns.add_categories(["TEMPERATURE_AIR_200DEGC", "DEW_POINT_DEGC", "RAD_WH", "wind_speed"])
         # For pvlib, temperatures need to be available in degC:
@@ -67,4 +70,4 @@ class DWD_Forecast:
 if __name__ == "__main__":
     dwd_fc = DWD_Forecast("P0031")
     mydata = dwd_fc.retrieve_data()
-    print(mydata.WIND_SPEED)
+    print(mydata.columns)
