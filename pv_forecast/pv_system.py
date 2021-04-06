@@ -75,16 +75,30 @@ class PVSystem:
         self.model_chain[id] = model_chain
     
     def setup_weather_data(self, ghi, dhi, dni, temp_air=None, wind_speed=None):
+        """ 
+        Setup a pandas Dataframe carrying the weather information. All inputs are defined
+        as pandas.Series type having identical index.
+        """
         weather_data = {"ghi": ghi, "dni": dni, "dhi": dhi,
                         "temp_air": temp_air, "wind_speed": wind_speed}
         weather_df = pd.DataFrame(weather_data)
         return weather_df
 
     def run_model(self, wheater_data) -> None:
-        for id, pv_system in self.model_chain.items():
+        """
+        Run the Model while looping over each PV System.
+
+        Parameter:
+        weather_data:   pandas Dataframe including releavant weather and irradiance
+                        information
+        """
+        for _, pv_system in self.model_chain.items():
             pv_system.run_model(wheater_data)
 
     def combine_data(self, current_mode: str):
+        """
+        Setup a dataframe with all the results. 
+        """
         data_dict = pd.DataFrame()
         plain_series = ["ac", "aoi", "cell_temperature", "effective_irradiance",]
         nested_series = ["dc", "diode_params", "total_irrad"]
