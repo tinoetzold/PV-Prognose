@@ -4,16 +4,55 @@ from datetime import datetime
 import pandas as pd
 from pvlib.irradiance import dni
 from pv_forecast.dwd_forecast import DWD_Forecast
+from pv_forecast.dwd_history import DWD_History
 from pv_forecast.solar_parameters import Solar_Processing
 from pv_forecast.pv_system import PVSystem
+
 
 def main():
     config = configparser.ConfigParser()
     config.read('configuration.ini')
 
+    wheater_mode = config.get("DWD", "Mode", raw=True)
+
+    if wheater_mode == "from_file":
+        dwddata = get_wheater_from_dwd_forecast(config)
+
+    elif wheater_mode == "from_history":
+        # In this mode, historical wheater data is used:
+        dwddata = get_wheater_from_dwd_history(config)
+        dwddata = dwddata.loc['2021-04-01 1:00':'2021-04-06 23:00']
+    else:
+        # Default mode: use forecast from DWD Mosmix model
+        dwddata = get_wheater_from_dwd_forecast(config)
+        dwddata = dwddata.loc['2021-04-08 6:00':'2021-04-09 20:00']
+    
+    
+
+    calculate(dwddata=dwddata, config=config)
+
+def get_wheater_from_dwd_forecast(config):
+
     # Initialize class for retrieving DWD Data:
     dwd_fc = DWD_Forecast(config.get("DWD", "DWDStation", raw=True))
-    
+    # Now get the latest weather data:
+    dwddata = dwd_fc.retrieve_data()
+
+    return dwddata
+
+def get_wheater_from_dwd_history(config):
+
+    # Initialize class for retrieving DWD Data:
+    dwd_fc = DWD_History(config.getint("DWD", "DWDStationHistory", raw=True))
+    # Now get the latest weather data:
+    dwddata = dwd_fc.retrieve_data()
+
+    return dwddata
+  
+
+
+def calculate(dwddata, config):
+
     # Initialize class for getting basic solar parameters:
     mylatitude = config.getfloat("SolarSystem", "Latitude", raw=True)
     mylongitude = config.getfloat("SolarSystem", "Longitute", raw=True)
@@ -23,11 +62,6 @@ def main():
     # Solar parameter processing:
     solar_proc = Solar_Processing(mylatitude, mylongitude, myaltitude, mytimezone)
 
-    
-
-    # Now get the latest weather data:
-    dwddata = dwd_fc.retrieve_data()
-    dwddata = dwddata.loc['2021-04-02 6:00':'2021-04-08 20:00']
 
     # Use the time range of the DWD Data as basis for further calculations
     time_range = dwddata.index

@@ -1,4 +1,4 @@
-import os
+import os, json
 import pvlib
 import pandas as pd
 from pvlib.temperature import TEMPERATURE_MODEL_PARAMETERS
@@ -6,8 +6,6 @@ from pvlib.temperature import TEMPERATURE_MODEL_PARAMETERS
 TEMP_MOD_PARA = TEMPERATURE_MODEL_PARAMETERS['sapm']['open_rack_glass_glass']
 AOI_MODEL = "no_loss"
 SPECTRAL_MODEL = "no_loss"
-MYINV = {"Vac":400.0,"Pso":20.0,"Paco":4200.0,"Pdco":4325.437693099,"Vdco":570.0,"C0":0.000001335,"C1":0.0,"C2":0.0,"C3":-0.0004768538,"Pnt":7.9,"Vdcmax":900.0,"Idcmax":13.0,"Mppt_low":120.0,"Mppt_high":720.0}
-
 class PVSystem:
     def __init__(self, inverter: str, pv_module: str, albedo: float, pvlib_location) -> None:
         
@@ -38,7 +36,10 @@ class PVSystem:
         # TODO: bring data to pickle file or something.
         if "Kostal_Plenticore__Plus_4_2" in inverter:
             # My inverter (setu)
-            self.inverter = pd.Series(MYINV)
+            file_path = os.path.dirname(__file__)
+            with open(os.path.join(file_path, "data", "Kostal_Plenticore__Plus_4_2.json")) as converter_data:
+                myinv = json.load(converter_data)
+            self.inverter = pd.Series(myinv)
         else:
             cec_inverters = pvlib.pvsystem.retrieve_sam('cecinverter')
             self.inverter = cec_inverters[inverter]
@@ -122,3 +123,6 @@ class PVSystem:
         for col in all_ac_columns:
             data_dict["ALL_AC_POWER" + "_" + current_mode] = data_dict["ALL_AC_POWER" + "_" + current_mode] + data_dict[col]
         return data_dict
+
+if __name__ == "__main__":
+    pass
