@@ -21,11 +21,11 @@ def main():
     elif wheater_mode == "from_history":
         # In this mode, historical wheater data is used:
         dwddata = get_wheater_from_dwd_history(config)
-        dwddata = dwddata.loc['2021-04-01 1:00':'2021-04-06 23:00']
+        dwddata = dwddata.loc['2021-04-01 1:00':'2021-04-10 23:00']
     else:
         # Default mode: use forecast from DWD Mosmix model
         dwddata = get_wheater_from_dwd_forecast(config)
-        dwddata = dwddata.loc['2021-04-08 6:00':'2021-04-09 20:00']
+        dwddata = dwddata.loc['2021-04-09 6:00':'2021-04-10 20:00']
     
     
 

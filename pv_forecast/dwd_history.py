@@ -17,8 +17,8 @@ from wetterdienst.provider.dwd.observation import (DwdObservationParameter,
                                                   DwdObservationParameter,
                                                   DwdObservationPeriod)
 
-# Conversion factor: kJ/cm^2 to Wh/m^2 (only valid for hourly time interval)
-J_to_KW = 27.7778
+# Conversion factor: kJ/cm^2 to W/m^2 (only valid for 10 minute intervall)
+J_to_KW = 16.666666667
 
 # List of parameters to determine from DWD data, see following link for details:
 # https://opendata.dwd.de/weather/lib/MetElementDefinition.xml
@@ -38,7 +38,7 @@ class DWD_History:
         DwdObservationParameter.MINUTE_10.WIND_SPEED,
         ],
         resolution=DwdObservationResolution.MINUTE_10,
-        period=DwdObservationPeriod.RECENT
+        period=DwdObservationPeriod.NOW
         ).filter(station_id=(station_id, ))      # 1078 = Duesseldorf Flughafen
         # Assign the station:
         #self.stations = self.request.filter(station_id=station_id)
@@ -70,6 +70,7 @@ class DWD_History:
         reshaped_data["DEW_POINT_DEGC"] = reshaped_data["temperature_dew_point_200"]
         # Given global radiation is in kJ/m^2, tranform into Wh/m^2
         reshaped_data["RAD_WH"] = reshaped_data["radiation_global"].apply(lambda x: x * J_to_KW)
+        reshaped_data["RAD_DIFFUS"] = reshaped_data["radiation_sky_diffuse"].apply(lambda x: x * J_to_KW)
         reshaped_data['WIND_SPEED'] = reshaped_data['wind_speed'].astype(float)
         reshaped_data["PRESSURE_AIR_SURFACE_REDUCED"] = reshaped_data["pressure_air_station_height"].astype(float)
 
