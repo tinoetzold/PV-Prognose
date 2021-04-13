@@ -41,8 +41,15 @@ Then, the forecast data will be stored in a SQL-Library to be displayed in a Nod
 
 The current values of the PV inverter will be stored on a regular basis (e.g. minutely) in an InfluxDB.
 
+# Usage of the Tool
+## Configuration
 
-## My PV-Installation
+### Weather Forecast Data
+
+The weather forecast is taken from DWD Mosmix model. The station closest to the location of the PV system is defined in the configuration.ini file in the Section "DWD".
+
+Basically, for validation purpose, it is possible to base the simulation on forecast data as well as on historical data (measured values). The historical data includes global irradiation as well as diffuse irradiation
+### My PV-Installation
 
 Since the available rooftop area is quite limited, I have a small PV System installed.
 
@@ -52,15 +59,27 @@ Configuration:
 - Installed panels on West side rooftop (azimuth = 281 deg west): 8 x 355 W = 2840 W
 - Inverter: Kostal Plenticore Plus 4.2 (4.2 kWp)
 
+The basic configuration of the PV System is done in the configuration.ini-file  in the SolarSystem-Section. 
 
+# Verification
+## Irradiation Models
+
+The DWD Mosmix forecast provides global irradiation (ghi) values in a hourly resulution. To run the PVLIB Model Chain, also the diffuse horizontal irradiation (dhi) and the direct normal irradiation (dni) is required.
+
+## Direct Normal Irradiation (dni)
+
+PVLIB comes up with a couple of alogrithms to determine dni from ghi. Here we use multiple of them, but the DISC model seems to work good.
+
+## Diffuse Horizontal Irradiation (dhi)
+For dhi computation, the Erbs model is used. It showed a good compliance between forecasted and measured (by DWD) values.
 
 # Outputs
 ## CSV-File with all data
 
-After running the main.py, a csv-file carrying wheater data, irradiation and computet PV system results.
+After running the main.py, a csv-file carrying wheater data, irradiation and computet PV system results. This file is stored in the "output" directory.
 
-
-### DC-Paramters
+# Internals
+## DC-Paramters (from PVLIB source code)
 
         * i_sc : Short-circuit current (A)
         * i_mp : Current at the maximum-power point (A)
@@ -72,9 +91,3 @@ After running the main.py, a csv-file carrying wheater data, irradiation and com
         * i_xx : Current at module V = 0.5(Voc+Vmp), defines 5th point on
           I-V curve for modeling curve shape
 
-# Github discussions
-https://github.com/pvlib/pvlib-python/issues/1128
-
-https://github.com/StefaE/PVForecast
-
-https://github.com/kilianknoll/DWDForecast/issues/5
