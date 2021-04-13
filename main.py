@@ -1,8 +1,7 @@
 import configparser
 import os
-from datetime import datetime
+import datetime
 import pandas as pd
-from pvlib.irradiance import dni
 from pv_forecast.dwd_forecast import DWD_Forecast
 from pv_forecast.dwd_history import DWD_History
 from pv_forecast.solar_parameters import Solar_Processing
@@ -15,17 +14,38 @@ def main():
 
     wheater_mode = config.get("DWD", "Mode", raw=True)
 
+
+
+
+
     if wheater_mode == "from_file":
-        dwddata = get_wheater_from_dwd_forecast(config)
+        #dwddata = get_wheater_from_dwd_forecast(config)
+        #TODO: implemnent simple analysis function (from file)
+        dwddata = None
+        pass
 
     elif wheater_mode == "from_history":
+        # Set up the time periode for history (adjust the timedelta for different aproach)
+        today = datetime.date.today() - datetime.timedelta(days=2)
+        start = datetime.datetime(year=today.year, month=today.month, day=today.day, hour=1)
+        start = pd.Timestamp(start).tz_localize('utc')
+        periode_end = datetime.date.today() 
+        end = datetime.datetime(year=periode_end.year, month=periode_end.month, day=periode_end.day, hour=23)
+        end = pd.Timestamp(end).tz_localize('utc')
         # In this mode, historical wheater data is used:
         dwddata = get_wheater_from_dwd_history(config)
-        dwddata = dwddata.loc['2021-04-01 1:00':'2021-04-10 23:00']
+        dwddata = dwddata.loc[start:end]
     else:
+        # 
+        today = datetime.date.today()#
+        start = datetime.datetime(year=today.year, month=today.month, day=today.day, hour=1)
+        start = pd.Timestamp(start).tz_localize('utc')
+        periode_end = today + datetime.timedelta(days=2)
+        end = datetime.datetime(year=periode_end.year, month=periode_end.month, day=periode_end.day, hour=23)
+        end = pd.Timestamp(end).tz_localize('utc')
         # Default mode: use forecast from DWD Mosmix model
         dwddata = get_wheater_from_dwd_forecast(config)
-        dwddata = dwddata.loc['2021-04-09 6:00':'2021-04-10 20:00']
+        dwddata = dwddata.loc[start:end]
     
     
 
@@ -152,7 +172,7 @@ def calculate(dwddata, config):
     # Mege single datasets into one to have a common csv file.
     result = pd.concat([whole_df, calc_data], axis=1)
     #result = pd.merge(whole_df,my_data, left_index=True)
-    csv_filename = datetime.now().strftime("%Y_%m_%d_%H_%M_Uhr.csv")
+    csv_filename = datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_Uhr.csv")
     result.to_csv(os.path.join("output", csv_filename))
 
 if __name__ == "__main__":
