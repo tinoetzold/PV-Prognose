@@ -16,14 +16,5 @@ class TestDWDForecast(unittest.TestCase):
         self.assertTrue("RADIATION_GLOBAL" in my_df.columns)
         self.assertTrue(len(my_df["RADIATION_GLOBAL"]) > 1)
 
-    def test_raw_data_transformation(self):
-        # Open a pickle file conataining a pandas Dataframe with a dwd datatset.
-        raw_data = pd.read_pickle(os.path.join(os.path.dirname(__file__), "data", "test_dwd_forecast_data.p"))
-        reshaped_data = self.dwd_fc.reshape_data(raw_data)
-        self.assertTrue(isinstance(reshaped_data, pd.DataFrame))
-        self.assertFalse("RAD_WH" in raw_data.columns)
-        self.assertTrue("RAD_WH" in reshaped_data.columns)
-        self.assertTrue(len(reshaped_data["RAD_WH"]) > 1)
-
 if __name__ == '__main__':
     unittest.main()
