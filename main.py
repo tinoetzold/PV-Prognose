@@ -84,13 +84,17 @@ def calculate(dwddata, config):
 
 
     # Use the time range of the DWD Data as basis for further calculations
+    #time_range = dwddata.index
+
+    dwddata.index = pd.date_range(dwddata.index[0], dwddata.index[-1], freq='H', tz=mytimezone)
     time_range = dwddata.index
+    print(time_range)
 
     # Now set up the weather data
     solar_proc.process_weather_data(time_range)
  
     # Calc DNI using DISC model:
-    dni_disc = solar_proc.calc_dni_disc(time_range=time_range, ghi=dwddata.RAD_WH, mypressure=dwddata.PRESSURE_AIR_SURFACE_REDUCED)
+    dni_disc = solar_proc.calc_dni_disc(time_range=time_range, ghi=dwddata.RAD_WH, mypressure=dwddata.pressure_air_site_reduced)
 
     # Calc DNI using DIRINT model:
     dni_dirint = solar_proc.calc_dni_dirindex(time_range=time_range, ghi=dwddata.RAD_WH, dew_point=dwddata.DEW_POINT_DEGC)
@@ -131,20 +135,20 @@ def calculate(dwddata, config):
                                                         dhi=solar_proc.clearsky.dhi,
                                                         dni=solar_proc.clearsky.dni,
                                                         temp_air=dwddata.TEMPERATURE_AIR_200DEGC,
-                                                        wind_speed=dwddata.WIND_SPEED)
+                                                        wind_speed=dwddata.wind_speed)
         elif current_mode == "disc":
             # Modue using DWD Forecast for calculation
             weather_data = pv_system.setup_weather_data(ghi=dwddata.RAD_WH,
                                                         dhi=dhi_erbs.dhi,
                                                         dni=dni_disc.dni,
                                                         temp_air=dwddata.TEMPERATURE_AIR_200DEGC,
-                                                        wind_speed=dwddata.WIND_SPEED)
+                                                        wind_speed=dwddata.wind_speed)
         elif current_mode == "dirint":
             weather_data = pv_system.setup_weather_data(ghi=dwddata.RAD_WH,
                                                         dhi=dni_dirint.values,
                                                         dni=dni_disc.dni,
                                                         temp_air=dwddata.TEMPERATURE_AIR_200DEGC,
-                                                        wind_speed=dwddata.WIND_SPEED)     
+                                                        wind_speed=dwddata.wind_speed)     
 
         pv_system.run_model(wheater_data=weather_data)
         my_data = pv_system.combine_data(current_mode)
@@ -152,17 +156,17 @@ def calculate(dwddata, config):
     
     # Build up common dataframe to collect complete calculation data:
     whole_df = dwddata
-    whole_df.columns = whole_df.columns.add_categories(["DHI_ERBS", "DNI_DISC", "DNI_DIRINDEX"])
+    #whole_df.columns = whole_df.columns.add_categories(["DHI_ERBS", "DNI_DISC", "DNI_DIRINDEX"])
     whole_df["DHI_ERBS"] = dhi_erbs["dhi"]
     whole_df["DNI_DISC"] = dni_disc["dni"]
     whole_df["DNI_DIRINDEX"] = dni_dirint.values
 
-    whole_df.columns = whole_df.columns.add_categories(["GHI_CLEARSKY", "DNI_CLEARSKY", "DHI_CLEARSKY"])
+    #whole_df.columns = whole_df.columns.add_categories(["GHI_CLEARSKY", "DNI_CLEARSKY", "DHI_CLEARSKY"])
     whole_df["GHI_CLEARSKY"] = solar_proc.clearsky.ghi
     whole_df["DNI_CLEARSKY"] = solar_proc.clearsky.dni
     whole_df["DHI_CLEARSKY"] = solar_proc.clearsky.dhi
 
-    whole_df.columns = whole_df.columns.add_categories(["AZIMUTH", "ZENITH", "ELEVATION"])
+    #whole_df.columns = whole_df.columns.add_categories(["AZIMUTH", "ZENITH", "ELEVATION"])
     whole_df["AZIMUTH"] = solar_proc.solpos.azimuth
     whole_df["ZENITH"] = solar_proc.solpos.zenith
     whole_df["ELEVATION"] = solar_proc.solpos.elevation

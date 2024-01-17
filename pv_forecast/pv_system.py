@@ -70,7 +70,7 @@ class PVSystem:
         model_chain = pvlib.modelchain.ModelChain(system=solar_sys,
                                                 location=self.pvlib_location,
                                                 aoi_model=AOI_MODEL,
-                                                orientation_strategy=None,
+#                                                orientation_strategy=None,
                                                 spectral_model=SPECTRAL_MODEL
                                                 )
         self.model_chain[id] = model_chain
@@ -106,14 +106,16 @@ class PVSystem:
 
         # Loop about each pv system and build up unique column names
         for id, pv_system in self.model_chain.items():
+            x = pv_system.results.ac
+            print(x)
             # Assign plain stored Series:
             for pv_key in plain_series:
-                data_ = getattr(pv_system, pv_key)
+                data_ = getattr(pv_system.results, pv_key)
                 data_dict[id + "_" + pv_key + "_" + current_mode] = data_
             
             # Assign nested stored Series:
             for pv_key in nested_series:
-                data_ = getattr(pv_system, pv_key)
+                data_ = getattr(pv_system.results, pv_key)
                 for column in data_.columns:
                     data_dict[id + "_" + pv_key + "_" + column + "_" + current_mode] = data_[column]
         
